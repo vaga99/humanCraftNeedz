@@ -71,4 +71,21 @@ final class NeedController extends AbstractController
         $jsonNeed = $serializer->serialize($need, 'json', ['groups' => 'getNeeds']);
         return new JsonResponse($jsonNeed, Response::HTTP_CREATED, [], true);
     }
+
+    #[Route('/api/needs/{id}', name: 'getNeed', methods: ['GET'])]
+    public function getNeed(
+        int $id,
+        NeedRepository $needRepository, 
+        SerializerInterface $serializer,
+    ): JsonResponse
+    {
+        $need = $needRepository->find($id);
+
+        if($need) {
+            $jsonNeed = $serializer->serialize($need, 'json', ['groups' => 'getNeeds']);
+            return new JsonResponse($jsonNeed, Response::HTTP_OK, [], true);
+        }
+
+        return new JsonResponse(null, Response::HTTP_NOT_FOUND, []);
+    }
 }
