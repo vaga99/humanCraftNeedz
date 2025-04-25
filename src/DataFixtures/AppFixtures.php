@@ -54,6 +54,10 @@ class AppFixtures extends Fixture
         $author2->addNeed($need2);
         $manager->persist($author2);
 
+        $author3 = new Author();
+        $author3->setName("Florian");
+        $manager->persist($author3);
+
         $manager->flush();
     }
 }
