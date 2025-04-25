@@ -60,7 +60,7 @@ final class NeedController extends AbstractController
             }
         }
 
-        // WIP avant l'authentification
+        // WIP before authentication
         $author = $authorRepository->findOneById(3);
         $em->persist($author);
         $need->setAuthor($author);
@@ -87,5 +87,65 @@ final class NeedController extends AbstractController
         }
 
         return new JsonResponse(null, Response::HTTP_NOT_FOUND, []);
+    }
+
+    /**
+     * Edit Need
+     */
+    #[Route('/api/needs/{id}', name: 'editNeed', methods: ['PATCH'])]
+    public function editNeed(
+        int $id, 
+        Request $request, 
+        SerializerInterface $serializer, 
+        EntityManagerInterface $em,
+        NeedRepository $needRepository,
+        SkillRepository $skillRepository, 
+        AuthorRepository $authorRepository,
+    ): JsonResponse
+    {
+        $need = $needRepository->find($id);
+
+        // Get skills in request
+        $content = $request->toArray();
+
+        $title = $content["title"] ?? $need->getTitle();
+        $summary = $content["summary"] ?? $need->getSummary();
+        $url = $content["url"] ?? $need->getUrl();
+        $authorId = $content["author"] ?? $need->getAuthor()->getId();
+        $author = $authorRepository->find($authorId);
+        $skills = $content["skills"] ?? null;
+
+        $need->setTitle($title);
+        $need->setSummary($summary);
+        $need->setUrl($url);
+
+        if($author && is_object($author)) {
+            $need->setAuthor($author);
+        }
+        
+        if(is_array($skills) && count($skills) > 0) {
+            $needSkills = $need->getSkills()->toArray();
+            
+            // Delete old skills
+            if(is_array($needSkills) && count($needSkills) > 0) {
+                foreach ($needSkills as $key => $value) {
+                    $need->removeSkill($value);
+                }
+            }
+            
+            for ($i=0; $i < count($skills) ; $i++) {
+                $skill = $skillRepository->find($skills[$i]) ?? null;
+                
+                // Security check if skills are valid before adding them
+                if($skill && is_object($skill)) {
+                    $need->addSkill($skill);
+                }
+            }
+        }
+        
+        $em->persist($need);
+        $em->flush();
+        $jsonNeed = $serializer->serialize($need, 'json', ['groups' => 'getNeeds']);
+        return new JsonResponse($jsonNeed, Response::HTTP_OK, [], true);
     }
 }
