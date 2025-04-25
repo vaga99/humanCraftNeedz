@@ -20,11 +20,18 @@ final class NeedController extends AbstractController
 {
     #[Route('/api/needs', name: 'getNeeds', methods: ['GET'])]
     public function getNeeds(
+        Request $request, 
         NeedRepository $needRepository, 
         SerializerInterface $serializer,
     ): JsonResponse
     {
-        $needlist = $needRepository->findAll();
+
+        $title = $request->headers->get('title') ?? null;
+        if($title) {
+            $needlist = $needRepository->findByTitle($title);
+        } else {
+            $needlist = $needRepository->findAll();
+        }
 
         $jsonNeedList = $serializer->serialize($needlist, 'json', ['groups' => 'getNeeds']);
 
@@ -46,6 +53,7 @@ final class NeedController extends AbstractController
         $content = $request->toArray();
         $authorId = $request->headers->get('AuthorId') ?? null;
 
+        // check if author is allowed to add a need
         if(!$request->headers->get('AuthorId')) {
             throw new BadRequestHttpException("You need to be logged in to add a need");
         } elseif(!$authorRepository->find($authorId)) {
@@ -90,11 +98,10 @@ final class NeedController extends AbstractController
     #[Route('/api/needs/{id}', name: 'getNeed', methods: ['GET'])]
     public function getNeed(
         Need $need,
-        NeedRepository $needRepository, 
         SerializerInterface $serializer,
     ): JsonResponse
     {
-        $jsonNeed = $serializer->serialize($need, 'json', ['groups' => 'getNeeds']);
+        $jsonNeed = $serializer->serialize($need, 'json', ['groups' => 'getNeed']);
         return new JsonResponse($jsonNeed, Response::HTTP_OK, [], true);
     }
 

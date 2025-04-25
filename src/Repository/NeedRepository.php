@@ -16,20 +16,21 @@ class NeedRepository extends ServiceEntityRepository
         parent::__construct($registry, Need::class);
     }
 
-    //    /**
-    //     * @return Need[] Returns an array of Need objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('n')
-    //            ->andWhere('n.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('n.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
+       /**
+        * Return all need object filtered by title
+        * 
+        * @return Need[] Returns an array of Need objects
+        */
+       public function findByTitle($value): array
+       {
+           return $this->createQueryBuilder('n')
+               ->andWhere('n.title LIKE :val')
+               ->setParameter('val', '%'.$value."%")
+               ->orderBy('n.id', 'ASC')
+               ->getQuery()
+               ->getResult()
+           ;
+       }
 
     //    public function findOneBySomeField($value): ?Need
     //    {

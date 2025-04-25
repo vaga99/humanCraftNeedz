@@ -15,11 +15,11 @@ class Author
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(["getNeeds"])]
+    #[Groups(["getNeeds", "getNeed"])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(["getNeeds"])]
+    #[Groups(["getNeeds", "getNeed"])]
     #[Assert\NotBlank(message: "Name is mandatory")]
     private ?string $name = null;
 
