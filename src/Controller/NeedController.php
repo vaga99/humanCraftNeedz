@@ -25,8 +25,8 @@ final class NeedController extends AbstractController
         SerializerInterface $serializer,
     ): JsonResponse
     {
-
-        $title = $request->headers->get('title') ?? null;
+        $title = $request->query->get('search') ?? null;
+        
         if($title) {
             $needlist = $needRepository->findByTitle($title);
         } else {
