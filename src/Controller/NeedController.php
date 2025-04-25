@@ -13,6 +13,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 final class NeedController extends AbstractController
@@ -43,6 +44,13 @@ final class NeedController extends AbstractController
         ValidatorInterface $validator
     ): JsonResponse {
         $content = $request->toArray();
+        $authorId = $request->headers->get('AuthorId') ?? null;
+
+        if(!$request->headers->get('AuthorId')) {
+            throw new BadRequestHttpException("You need to be logged in to add a need");
+        } elseif(!$authorRepository->find($authorId)) {
+            throw new BadRequestHttpException("You're not allowed to edit this need");
+        }
 
         $skills = $content['skills'] ?? null;
         $need = new Need();
@@ -107,23 +115,25 @@ final class NeedController extends AbstractController
     {
         $need = $needRepository->find($id);
         $content = $request->toArray();
+        $authorId = $request->headers->get('AuthorId') ?? null;
+
+        // check if author is allowed to edit a need
+        if(!$request->headers->get('AuthorId')) {
+            throw new BadRequestHttpException("You need to be logged in to add a need");
+        } elseif(!$authorRepository->find($authorId) || $authorRepository->find($authorId) != $need->getAuthor()) {
+            throw new BadRequestHttpException("You're not allowed to edit this need");
+        }
 
         // get all request content if present or get current value
         $title = $content["title"] ?? $need->getTitle();
         $summary = $content["summary"] ?? $need->getSummary();
         $url = $content["url"] ?? $need->getUrl();
-        $authorId = $content["author"] ?? $need->getAuthor()->getId();
-        $author = $authorRepository->find($authorId);
         $skills = $content["skills"] ?? null;
 
         // set all properties with new value
         $need->setTitle($title);
         $need->setSummary($summary);
         $need->setUrl($url);
-
-        if($author && is_object($author)) {
-            $need->setAuthor($author);
-        }
         
         if(is_array($skills) && count($skills) > 0) {
             $needSkills = $need->getSkills()->toArray();
