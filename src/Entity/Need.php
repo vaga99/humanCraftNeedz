@@ -6,6 +6,7 @@ use App\Repository\NeedRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
+use Symfony\Component\Serializer\Annotation\Groups;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: NeedRepository::class)]
@@ -14,25 +15,31 @@ class Need
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(["getNeeds"])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(["getNeeds"])]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Groups(["getNeeds"])]
     private ?string $summary = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Groups(["getNeeds"])]
     private ?string $url = null;
 
     /**
      * @var Collection<int, Skill>
      */
     #[ORM\ManyToMany(targetEntity: Skill::class, mappedBy: 'needs')]
+    #[Groups(["getNeeds"])]
     private Collection $skills;
 
     #[ORM\ManyToOne(inversedBy: 'needs')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(["getNeeds"])]
     private ?Author $author = null;
 
     public function __construct()
