@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: SkillRepository::class)]
 class Skill
@@ -19,6 +20,7 @@ class Skill
 
     #[ORM\Column(length: 255)]
     #[Groups(["getNeeds"])]
+    #[Assert\NotBlank(message: "Label is mandatory")]
     private ?string $label = null;
 
     /**

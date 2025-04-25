@@ -13,6 +13,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 final class NeedController extends AbstractController
 {
@@ -39,6 +40,7 @@ final class NeedController extends AbstractController
         SkillRepository $skillRepository, 
         AuthorRepository $authorRepository,
         EntityManagerInterface $em, 
+        ValidatorInterface $validator
     ): JsonResponse {
         $content = $request->toArray();
 
@@ -64,6 +66,11 @@ final class NeedController extends AbstractController
         $author = $authorRepository->findOneById(3);
         $em->persist($author);
         $need->setAuthor($author);
+
+        $errors = $validator->validate($need);
+        if($errors->count()) {
+            return new JsonResponse($serializer->serialize($errors, 'json'), Response::HTTP_BAD_REQUEST, [], true);
+        }
         
         $em->persist($need);
         $em->flush();
@@ -74,19 +81,13 @@ final class NeedController extends AbstractController
 
     #[Route('/api/needs/{id}', name: 'getNeed', methods: ['GET'])]
     public function getNeed(
-        int $id,
+        Need $need,
         NeedRepository $needRepository, 
         SerializerInterface $serializer,
     ): JsonResponse
     {
-        $need = $needRepository->find($id);
-
-        if($need) {
-            $jsonNeed = $serializer->serialize($need, 'json', ['groups' => 'getNeeds']);
-            return new JsonResponse($jsonNeed, Response::HTTP_OK, [], true);
-        }
-
-        return new JsonResponse(null, Response::HTTP_NOT_FOUND, []);
+        $jsonNeed = $serializer->serialize($need, 'json', ['groups' => 'getNeeds']);
+        return new JsonResponse($jsonNeed, Response::HTTP_OK, [], true);
     }
 
     /**
@@ -101,13 +102,13 @@ final class NeedController extends AbstractController
         NeedRepository $needRepository,
         SkillRepository $skillRepository, 
         AuthorRepository $authorRepository,
+        ValidatorInterface $validator
     ): JsonResponse
     {
         $need = $needRepository->find($id);
-
-        // Get skills in request
         $content = $request->toArray();
 
+        // get all request content if present or get current value
         $title = $content["title"] ?? $need->getTitle();
         $summary = $content["summary"] ?? $need->getSummary();
         $url = $content["url"] ?? $need->getUrl();
@@ -115,6 +116,7 @@ final class NeedController extends AbstractController
         $author = $authorRepository->find($authorId);
         $skills = $content["skills"] ?? null;
 
+        // set all properties with new value
         $need->setTitle($title);
         $need->setSummary($summary);
         $need->setUrl($url);
@@ -141,6 +143,11 @@ final class NeedController extends AbstractController
                     $need->addSkill($skill);
                 }
             }
+        }
+
+        $errors = $validator->validate($need);
+        if($errors->count()) {
+            return new JsonResponse($serializer->serialize($errors, 'json'), Response::HTTP_BAD_REQUEST, [], true);
         }
         
         $em->persist($need);
