@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: NeedRepository::class)]
@@ -20,14 +21,18 @@ class Need
 
     #[ORM\Column(length: 255)]
     #[Groups(["getNeeds"])]
+    #[Assert\NotBlank(message: "Title is mandatory")]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::TEXT)]
     #[Groups(["getNeeds"])]
+    #[Assert\NotBlank(message: "Summary is mandatory")]
     private ?string $summary = null;
 
     #[ORM\Column(type: Types::TEXT)]
     #[Groups(["getNeeds"])]
+    #[Assert\NotBlank(message: "Url is mandatory")]
+    #[Assert\Url(message: "Url is not valid")]
     private ?string $url = null;
 
     /**
@@ -35,11 +40,12 @@ class Need
      */
     #[ORM\ManyToMany(targetEntity: Skill::class, mappedBy: 'needs')]
     #[Groups(["getNeeds"])]
+    #[Assert\Count(min: "1")]
     private Collection $skills;
 
     #[ORM\ManyToOne(inversedBy: 'needs')]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(["getNeeds"])]
+    #[Assert\NotBlank(message: "Author is mandatory")]
     private ?Author $author = null;
 
     public function __construct()
