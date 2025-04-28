@@ -73,8 +73,8 @@ class NeedController extends AbstractController
      * @param ValidatorInterface $validator
      * @return JsonResponse
      */
-    #[Route('/api/needs', name: 'createNeed', methods: ['POST'])]
-    #[OA\RequestBody(content: new Model(type: Need::class, groups: ["createNeed"]))]
+    #[Route('/api/needs', name: 'addNeed', methods: ['POST'])]
+    #[OA\RequestBody(content: new Model(type: Need::class, groups: ["addNeed"]))]
     #[OA\Parameter(
         name: 'AuthorId',
         in: 'header',
@@ -88,7 +88,7 @@ class NeedController extends AbstractController
     )]
     #[OA\Tag(name: 'Needs')]
     #[Security(name: 'Author')]
-    public function createNeed(
+    public function addNeed(
         Request $request, 
         SerializerInterface $serializer, 
         SkillRepository $skillRepository, 
@@ -103,15 +103,19 @@ class NeedController extends AbstractController
         if(!$request->headers->get('AuthorId')) {
             throw new BadRequestHttpException("You need to be logged in to add a need");
         } elseif(!$authorRepository->find($authorId)) {
-            throw new BadRequestHttpException("You're not allowed to edit this need");
+            throw new BadRequestHttpException("You're not allowed to add a need");
         }
 
         $skills = $content['skills'] ?? null;
         $need = new Need();
 
-        $need->setTitle($content["title"]);
-        $need->setSummary($content["summary"]);
-        $need->setUrl($content["url"]);
+        $title = $content["title"] ?? "";
+        $summary = $content["summary"] ?? "";
+        $url = $content["url"] ?? "";
+
+        $need->setTitle($title);
+        $need->setSummary($summary);
+        $need->setUrl($url);
         
         if(is_array($skills) && count($skills) > 0) {
             for ($i=0; $i < count($skills) ; $i++) {
@@ -124,8 +128,7 @@ class NeedController extends AbstractController
             }
         }
 
-        // WIP before authentication
-        $author = $authorRepository->findOneById(3);
+        $author = $authorRepository->findOneById($authorId);
         $em->persist($author);
         $need->setAuthor($author);
 
@@ -148,7 +151,7 @@ class NeedController extends AbstractController
      * @param SerializerInterface $serializer
      * @return JsonResponse
      */
-    #[Route('/api/needs/{id}', name: 'getNeed', methods: ['GET'])]
+    #[Route('/api/needs/{need}', name: 'getNeed', methods: ['GET'])]
     #[OA\Response(
         response: 200,
         description: 'Successful response',
@@ -171,15 +174,14 @@ class NeedController extends AbstractController
      * @param int $id
      * @param Request $request
      * @param SerializerInterface $serializer
-     * @param NeedRepository $needRepository
      * @param SkillRepository $skillRepository
      * @param AuthorRepository $authorRepository
      * @param EntityManagerInterface $em
      * @param ValidatorInterface $validator
      * @return JsonResponse
      */
-    #[Route('/api/needs/{id}', name: 'editNeed', methods: ['PATCH'])]
-    #[OA\RequestBody(content: new Model(type: Need::class, groups: ["createNeed"]))]
+    #[Route('/api/needs/{need}', name: 'editNeed', methods: ['PATCH'])]
+    #[OA\RequestBody(content: new Model(type: Need::class, groups: ["addNeed"]))]
     #[OA\Parameter(
         name: 'AuthorId',
         in: 'header',
@@ -194,17 +196,15 @@ class NeedController extends AbstractController
     #[OA\Tag(name: 'Needs')]
     #[Security(name: 'Author')]
     public function editNeed(
-        int $id, 
+        Need $need, 
         Request $request, 
         SerializerInterface $serializer, 
-        NeedRepository $needRepository,
         SkillRepository $skillRepository, 
         AuthorRepository $authorRepository,
         EntityManagerInterface $em,
         ValidatorInterface $validator
     ): JsonResponse
     {
-        $need = $needRepository->find($id);
         $content = $request->toArray();
         $authorId = $request->headers->get('AuthorId') ?? null;
 
@@ -253,6 +253,7 @@ class NeedController extends AbstractController
         
         $em->persist($need);
         $em->flush();
+        
         $jsonNeed = $serializer->serialize($need, 'json', ['groups' => 'getNeeds']);
         return new JsonResponse($jsonNeed, Response::HTTP_OK, [], true);
     }

@@ -20,17 +20,17 @@ class Need
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(["getNeeds", "getNeed", "createNeed"])]
+    #[Groups(["getNeeds", "getNeed", "addNeed"])]
     #[Assert\NotBlank(message: "Title is mandatory")]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::TEXT)]
-    #[Groups(["getNeed", "createNeed"])]
+    #[Groups(["getNeed", "addNeed"])]
     #[Assert\NotBlank(message: "Summary is mandatory")]
     private ?string $summary = null;
 
     #[ORM\Column(type: Types::TEXT)]
-    #[Groups(["getNeed", "createNeed"])]
+    #[Groups(["getNeed", "addNeed"])]
     #[Assert\NotBlank(message: "Url is mandatory")]
     #[Assert\Url(message: "Url is not valid")]
     private ?string $url = null;
@@ -39,13 +39,13 @@ class Need
      * @var Collection<int, Skill>
      */
     #[ORM\ManyToMany(targetEntity: Skill::class, mappedBy: 'needs')]
-    #[Groups(["getNeeds", "getNeed", "createNeed"])]
+    #[Groups(["getNeeds", "getNeed", "addNeed"])]
     #[Assert\Count(min: "1")]
     private Collection $skills;
 
     #[ORM\ManyToOne(inversedBy: 'needs')]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(["getNeeds", "getNeed", "createNeed"])]
+    #[Groups(["getNeeds", "getNeed", "addNeed"])]
     #[Assert\NotBlank(message: "Author is mandatory")]
     private ?Author $author = null;
 
