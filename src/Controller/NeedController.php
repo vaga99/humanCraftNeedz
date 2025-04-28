@@ -15,14 +15,38 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Nelmio\ApiDocBundle\Attribute\Model;
+use Nelmio\ApiDocBundle\Attribute\Security;
+use OpenApi\Attributes as OA;
 
-final class NeedController extends AbstractController
+class NeedController extends AbstractController
 {
+    /**
+     * Get all needs with an optional parameter filter in query to search for title
+     * 
+     * @param Request $request
+     * @param SerializerInterface $serializer
+     * @param NeedRepository $needRepository
+     * @return JsonResponse
+     */
     #[Route('/api/needs', name: 'getNeeds', methods: ['GET'])]
+    #[OA\Parameter(
+        name: 'search',
+        in: 'query',
+        description: "Optionnal search in need's title",
+        schema: new OA\Schema(type: 'string')
+    )]
+    #[OA\Response(
+        response: 200,
+        description: 'Successful response',
+        content: new Model(type: Need::class, groups: ['getNeeds'])
+    )]
+    #[OA\Tag(name: 'Needs')]
+    #[Security(name: 'Author')]
     public function getNeeds(
         Request $request, 
-        NeedRepository $needRepository, 
         SerializerInterface $serializer,
+        NeedRepository $needRepository, 
     ): JsonResponse
     {
         $title = $request->query->get('search') ?? null;
@@ -39,9 +63,31 @@ final class NeedController extends AbstractController
     }
 
     /**
-     * Add Need
+     * Add a need if the user is an authenticated Author
+     * 
+     * @param Request $request
+     * @param SerializerInterface $serializer
+     * @param SkillRepository $skillRepository
+     * @param AuthorRepository $authorRepository
+     * @param EntityManagerInterface $em
+     * @param ValidatorInterface $validator
+     * @return JsonResponse
      */
     #[Route('/api/needs', name: 'createNeed', methods: ['POST'])]
+    #[OA\RequestBody(content: new Model(type: Need::class, groups: ["createNeed"]))]
+    #[OA\Parameter(
+        name: 'AuthorId',
+        in: 'header',
+        description: "Author id for creating need",
+        schema: new OA\Schema(type: 'string')
+    )]
+    #[OA\Response(
+        response: 200,
+        description: 'Successful response',
+        content: new Model(type: Need::class, groups: ['getNeeds'])
+    )]
+    #[OA\Tag(name: 'Needs')]
+    #[Security(name: 'Author')]
     public function createNeed(
         Request $request, 
         SerializerInterface $serializer, 
@@ -95,7 +141,21 @@ final class NeedController extends AbstractController
         return new JsonResponse($jsonNeed, Response::HTTP_CREATED, [], true);
     }
 
+    /**
+     * Get a single need
+     * 
+     * @param Need $need
+     * @param SerializerInterface $serializer
+     * @return JsonResponse
+     */
     #[Route('/api/needs/{id}', name: 'getNeed', methods: ['GET'])]
+    #[OA\Response(
+        response: 200,
+        description: 'Successful response',
+        content: new Model(type: Need::class, groups: ['getNeed'])
+    )]
+    #[OA\Tag(name: 'Needs')]
+    #[Security(name: 'Author')]
     public function getNeed(
         Need $need,
         SerializerInterface $serializer,
@@ -106,17 +166,41 @@ final class NeedController extends AbstractController
     }
 
     /**
-     * Edit Need
+     * Add a need if the user is an authenticated Author
+     * 
+     * @param int $id
+     * @param Request $request
+     * @param SerializerInterface $serializer
+     * @param NeedRepository $needRepository
+     * @param SkillRepository $skillRepository
+     * @param AuthorRepository $authorRepository
+     * @param EntityManagerInterface $em
+     * @param ValidatorInterface $validator
+     * @return JsonResponse
      */
     #[Route('/api/needs/{id}', name: 'editNeed', methods: ['PATCH'])]
+    #[OA\RequestBody(content: new Model(type: Need::class, groups: ["createNeed"]))]
+    #[OA\Parameter(
+        name: 'AuthorId',
+        in: 'header',
+        description: "Author id for editing need (must be the one that created the need)",
+        schema: new OA\Schema(type: 'string')
+    )]
+    #[OA\Response(
+        response: 200,
+        description: 'Successful response',
+        content: new Model(type: Need::class, groups: ['getNeed'])
+    )]
+    #[OA\Tag(name: 'Needs')]
+    #[Security(name: 'Author')]
     public function editNeed(
         int $id, 
         Request $request, 
         SerializerInterface $serializer, 
-        EntityManagerInterface $em,
         NeedRepository $needRepository,
         SkillRepository $skillRepository, 
         AuthorRepository $authorRepository,
+        EntityManagerInterface $em,
         ValidatorInterface $validator
     ): JsonResponse
     {
